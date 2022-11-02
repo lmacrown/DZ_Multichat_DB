@@ -1,0 +1,15 @@
+blocking : 동기화. 작업을 다른 프로세스에 맡기고 해당 프로세스는 작업을 쉼
+nonblocking : 비동기화. 작업을 다른 프로세스에 맡기고 해당 프로세스는 다른 작업을 함
+listener : 
+notify : 
+생산자 소비자 패턴 :
+poll : 데이터를 보내고 데이터가 없으면 null을 리턴함. nonblocking
+take : 데이터를 보내고 데이터가 없으면 대기함. blockng
+생산자 소비자 패턴 : 작업을 생산해 주는 주제촤 작업을 처리하는 주체를 분리
+Producer는 작업을 큐에 쌓아두고 Consumer는 큐에 쌓여있는 작업을 처리
+separatorchar
+Message.of : 시간까지 같이 기록
+callablestatement : 함수나 프로시저를 호출
+recordSet :
+TDD :
+
