@@ -18,7 +18,15 @@ import javax.swing.JLabel;
 
 import org.json.JSONObject;
 
+import member.Member;
+
 public class ClientControlFile extends ChatClient {
+	
+	Member member;
+
+	public ClientControlFile(Member member) {
+		this.member = member;
+	}
 	// 채팅 로그 출력
 	public void printChatLog() throws Exception {
 		connect();

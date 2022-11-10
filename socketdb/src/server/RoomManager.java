@@ -22,8 +22,8 @@ public class RoomManager {
     }
 
 
-    public Room loadRoom(String clientChatName) {
-    	return roomRecord.get(clientChatName);
+    public Room loadRoom(String uid) {
+    	return roomRecord.get(uid);
     }
     
     

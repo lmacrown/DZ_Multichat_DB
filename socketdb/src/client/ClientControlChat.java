@@ -5,9 +5,15 @@ import java.util.Scanner;
 
 import org.json.JSONObject;
 
+import chat.ChatLogRepositoryDB;
+import member.Member;
+
 public class ClientControlChat extends ChatClient{
-	
-	
+	Member member;
+
+	public ClientControlChat(Member member) {
+		this.member = member;
+	}
 	
 	public void receive() {
 		Thread thread = new Thread(() -> {
@@ -28,7 +34,7 @@ public class ClientControlChat extends ChatClient{
 	
 	public void chatCreate(Scanner scanner) {
 		try {
-
+			
 			String chatRoomName;
 			System.out.println("생성할 채팅방 이름: ");
 			chatRoomName = scanner.nextLine(); 
@@ -38,6 +44,7 @@ public class ClientControlChat extends ChatClient{
 
 			JSONObject jsonObject = new JSONObject();
 			jsonObject.put("chatCommand", "chatCreate");
+			jsonObject.put("Uid",member.getUid());
 			jsonObject.put("chatRoomName", chatRoomName);
 
 			String json = jsonObject.toString();
@@ -67,16 +74,15 @@ public class ClientControlChat extends ChatClient{
 
 			JSONObject jsonObject = new JSONObject();
 			jsonObject.put("chatCommand", "chatEnter");
+			jsonObject.put("Uid",member.getUid());
 			jsonObject.put("chatNo", select);
-			jsonObject.put("data", chatName);
+			jsonObject.put("chatname", chatName);
 			String json = jsonObject.toString();
 			
 			send(json);
 			
 			isEnter = chatEnterResponse();
 			disconnect();
-
-
 
 			return isEnter;
 
@@ -109,7 +115,7 @@ public class ClientControlChat extends ChatClient{
 
 			JSONObject jsonObject = new JSONObject();
 			jsonObject.put("chatCommand", "chatlist");
-
+			jsonObject.put("Uid",member.getUid());
 			String json = jsonObject.toString();
 			send(json);
 
@@ -135,6 +141,7 @@ public class ClientControlChat extends ChatClient{
 
 			JSONObject jsonObject = new JSONObject();
 			jsonObject.put("chatCommand", "chatrm");
+			jsonObject.put("Uid",member.getUid());
 			jsonObject.put("chatNo", select);
 
 			String json = jsonObject.toString();
@@ -156,14 +163,15 @@ public class ClientControlChat extends ChatClient{
 
 		System.out.println(message);
 	}
+	
 	public void sendMessage(Scanner scanner) {
 		try {
-
+			ChatLogRepositoryDB chatLogRepositoryDB = new ChatLogRepositoryDB();
 			connect();
 
 			JSONObject jsonObject = new JSONObject();
 			jsonObject.put("chatCommand", "chatstart");
-			jsonObject.put("chatName", chatName);
+			jsonObject.put("Uid",member.getUid());
 			String json = jsonObject.toString();
 			send(json);
 
@@ -182,12 +190,13 @@ public class ClientControlChat extends ChatClient{
 					jsonObject = new JSONObject();
 					jsonObject.put("chatCommand", "message");
 					jsonObject.put("data", message);
+					chatLogRepositoryDB.chatInput(message);
 					send(jsonObject.toString());
 				}
 			}
 			
 			
-			jsonObject.put("chatCommand", "endchat");
+			//jsonObject.put("chatCommand", "endchat");
 			json = jsonObject.toString();
 			send(json);
 			

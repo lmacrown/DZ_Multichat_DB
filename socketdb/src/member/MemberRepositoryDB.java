@@ -138,7 +138,7 @@ public class MemberRepositoryDB implements MemberRepository {
 			}
 			rs.close();
 			if (count != 1) {
-				throw new Member.ExistMember("[" + member.getUid() + "] 아이디가 존재합니다" );
+				throw new Member.ExistMember("[" + member.getUid() + "] 아이디가 존재하지 않습니다" );
 			}
 			pstmt.close();
 
@@ -176,7 +176,6 @@ public class MemberRepositoryDB implements MemberRepository {
 
 		Class.forName(prop.getProperty("driverClass"));
 		conn=connectDB();
-		List<Member> memberList = new ArrayList<>();
 
 		pstmt = conn.prepareStatement(prop.getProperty("DELETE_MEMBER"));
 		pstmt.setString(1, member.getUid());
@@ -196,49 +195,19 @@ public class MemberRepositoryDB implements MemberRepository {
 	public List<Member> getList() {
 		return memberList;
 	}
-
-	//	private static void insertTest(Member member) {
-	//		MemberRepositoryDB memberRepository = new MemberRepositoryDB();
-	//
-	//		try {
-	//			memberRepository.insertMember(member);
-	//		} catch (Exception e) {
-	//			// TODO Auto-generated catch block
-	//			e.printStackTrace();
-	//		}
-	//	}
-	//
-	//	private static void findByUidTest() {
-	//		MemberRepositoryDB memberRepository = new MemberRepositoryDB();
-	//		try {
-	//			Member member = memberRepository.findByUid("abcd123");
-	//			if (member != null) {
-	//				System.out.println(member.toString());
-	//			}
-	//		} catch (Exception e) {
-	//			// TODO Auto-generated catch block
-	//			e.printStackTrace();
-	//		}
-	//	}
-	//	private static void updateTest(Member member) {
-	//		MemberRepositoryDB memberRepository = new MemberRepositoryDB();
-	//		String targetID="gaag";
-	//		try {
-	//
-	//			memberRepository.updateMember(member,targetID);
-	//		} catch (Exception e) {
-	//			// TODO Auto-generated catch block
-	//			e.printStackTrace();
-	//		}
-	//	}
+	
+	public Member getMember(String uid) {
+		return memberMap.get(uid);
+	}
+	
 
 	public void loadMember() throws Exception {
 		prop.load(new FileInputStream("db.properties"));
 
 		Class.forName(prop.getProperty("driverClass"));
 		conn=connectDB();
-		
 		memberList = new ArrayList<>();
+
 		pstmt = conn.prepareStatement(prop.getProperty("SELECT_MEMBER"));
 		ResultSet rs = pstmt.executeQuery();
 		
@@ -247,12 +216,14 @@ public class MemberRepositoryDB implements MemberRepository {
 			dumpMem.uid = rs.getString("USERID");
 			dumpMem.pwd = rs.getString("PWD");
 			dumpMem.name = rs.getString("NAME");
-			memberMap.put(dumpMem.uid, dumpMem);
+			memberMap.put(dumpMem.getUid(), dumpMem);
 			memberList.add(dumpMem);
 
 		}
+		
 		for (Member m : memberList) {
 			System.out.printf("%s%n", "ID:" + m.getUid() + " " + "NAME:" + m.getName() + " " + "PW:" + m.getPwd());
+			System.out.println(memberMap.get(m.getUid()));
 		}
 
 		System.out.println();

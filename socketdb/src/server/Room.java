@@ -1,6 +1,7 @@
 package server;
 
 
+import java.util.Date;
 import java.util.List;
 import java.util.Vector;
 
@@ -10,6 +11,7 @@ public class Room {
     public int no;
     public String title;
     public List<SocketClient> clients;
+    private Date CreateDate;
     
     public Room(
             RoomManager roomManager,
@@ -21,9 +23,21 @@ public class Room {
         clients = new Vector<>();
     }
 
+    public Room(
+            RoomManager roomManager,
+            int no,
+            String title,
+            Date CreateDate) {
+        this.roomManager = roomManager;
+        this.no = no;
+        this.title = title;
+        this.CreateDate=CreateDate;
+        clients = new Vector<>();
+    }
+    
 
     public void entryRoom(SocketClient client) {
-		roomManager.roomRecord.put(client.chatName, this);
+		roomManager.roomRecord.put(client.clientUid, this);
     }
 
    

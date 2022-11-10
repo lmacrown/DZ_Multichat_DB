@@ -1,5 +1,4 @@
 package server;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -8,6 +7,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.json.JSONObject;
+
 import member.Member;
 import member.MemberRepository;
 import member.MemberRepositoryDB;
@@ -45,18 +45,18 @@ public class ChatServer {
 		JSONObject root = new JSONObject();
 		root.put("chatName", sender.chatName);
 		// 출력 파일 생성
-		String chatTitle = roomManager.loadRoom(sender.chatName).title;
-		FileWriter filewriter = new FileWriter("C:/Temp/" + chatTitle + ".db", true);
-		filewriter.write(message);
-		filewriter.flush();
-		filewriter.write("\n");
-		filewriter.close();
+		//String chatTitle = roomManager.loadRoom(sender.clientUid).title;
+		//FileWriter filewriter = new FileWriter("C:/Temp/" + chatTitle + ".db", true);
+		//filewriter.write(message);
+		//filewriter.flush();
+		//filewriter.write("\n");
+		//filewriter.close();
 
 		if (message.indexOf("@") == 0) {
 			int pos = message.indexOf(" ");
 			String key = message.substring(1, pos);
 			for (SocketClient c : sender.room.clients) {
-				if (key.equals(c.chatName)) {
+				if (key.equals(c.clientUid)) {
 					message = "(귀속말)  " + message.substring(pos + 1);
 					root.put("message", message);
 					String json = root.toString();

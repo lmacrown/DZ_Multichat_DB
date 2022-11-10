@@ -12,25 +12,25 @@ public class Member implements Serializable {
 	public String uid;
 	public String pwd;
 	public String name;
-	
+
 	public static class ExistMember extends Exception {
 		public ExistMember(String reason) {
 			super(reason);
 		}
 	}
-	
+
 	public static class NotExistMember extends Exception {
 		public NotExistMember(String reason) {
 			super(reason);
 		}
 	}
-	
+
 	public static class NotExistUidPwd extends Exception {
 		public NotExistUidPwd(String reason) {
 			super(reason);
 		}
 	}
-	
+
 	public Member(String uid, String pwd, String name) {
 		super();
 		this.uid = uid;
@@ -41,13 +41,21 @@ public class Member implements Serializable {
 	public Member(JSONObject jsonObject) {
 		uid = jsonObject.getString("uid");
 		pwd = jsonObject.getString("pwd");
-		if(jsonObject.has(name))
 		name = jsonObject.getString("name");
+		System.out.println(name);
 	}
-	
+
 	public Member() {
-    }
-	
+	}
+
+
+	public Member settingMember(String uid, String pwd, String name) {
+		this.uid = uid;
+		this.pwd = pwd;
+		this.name = name;
+		return this;
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)

@@ -112,7 +112,7 @@ public class MemberCommand{
 
 	private void updateMember(JSONObject jsonObject) {
 		Member member = new Member(jsonObject);
-
+		System.out.println(jsonObject);
 		JSONObject jsonResult = new JSONObject();
 
 		jsonResult.put("statusCode", "-1");
@@ -145,7 +145,7 @@ public class MemberCommand{
 			if (null != member && pwd.equals(member.getPwd())) {
 				jsonResult.put("statusCode", "0");
 				jsonResult.put("message", "로그인 성공");
-				jsonResult.put("uid", uid);
+				jsonResult.put("name", member.getName());
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

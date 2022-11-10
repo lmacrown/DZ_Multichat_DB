@@ -40,6 +40,7 @@ public class MemberRepositoryFile implements MemberRepository{
 		}
 	}
 
+	
 	private void saveMember() {
 		try {
 			File file = new File(MEMBER_FILE_NAME);
@@ -128,5 +129,10 @@ public class MemberRepositoryFile implements MemberRepository{
 
 		System.out.println();
 	}
+@Override
+public Member getMember(String uid) {
+	// TODO Auto-generated method stub
+	return null;
+}
 
 }
