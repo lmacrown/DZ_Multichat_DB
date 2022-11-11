@@ -13,10 +13,13 @@ import java.util.Map;
 import java.util.Properties;
 import org.json.JSONObject;
 
+import server.SocketClient;
+
 public class MemberRepositoryDB implements MemberRepository {
 	Map<String, Member> memberMap = Collections.synchronizedMap(new HashMap<>());
 	List<Member> memberList = null;
-
+	SocketClient sc;
+	
 	Properties prop = new Properties();
 	Connection conn = null;
 	PreparedStatement pstmt = null;
@@ -43,7 +46,7 @@ public class MemberRepositoryDB implements MemberRepository {
 			System.out.println("JDBC 드라이버 로딩 성공");
 			conn=connectDB();
 			pstmt = conn.prepareStatement(prop.getProperty("EXIST_MEMBER"));
-
+			JSONObject jsonResult = new JSONObject();
 			//멤버 존재여부 확인
 			pstmt.setString(1, member.getUid());
 			ResultSet rs = pstmt.executeQuery();
@@ -55,6 +58,7 @@ public class MemberRepositoryDB implements MemberRepository {
 			if (count != 0) {
 				throw new Member.ExistMember("[" + member.getUid() + "] 아이디가 존재합니다" );
 			}
+			
 			pstmt.close();
 			pstmt = conn.prepareStatement(prop.getProperty("INSERT_MEMBER"));
 
@@ -220,7 +224,6 @@ public class MemberRepositoryDB implements MemberRepository {
 			memberList.add(dumpMem);
 
 		}
-		
 		for (Member m : memberList) {
 			System.out.printf("%s%n", "ID:" + m.getUid() + " " + "NAME:" + m.getName() + " " + "PW:" + m.getPwd());
 			System.out.println(memberMap.get(m.getUid()));

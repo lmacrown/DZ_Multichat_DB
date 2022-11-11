@@ -4,11 +4,12 @@ import java.util.List;
 
 import org.json.JSONObject;
 import member.Member;
-public class MemberCommand{
-	
+
+public class MemberCommand {
+
 	ChatServer chatServer;
 	SocketClient sc;
-	
+
 	public MemberCommand(SocketClient sc, JSONObject jsonObject) {
 		this.chatServer = sc.chatServer;
 		this.sc = sc;
@@ -33,9 +34,9 @@ public class MemberCommand{
 			memberInfo();
 			break;
 		}
-		
+
 	}
-	
+
 	private void memberInfo() {
 		JSONObject jsonResult = new JSONObject();
 
@@ -43,18 +44,17 @@ public class MemberCommand{
 		jsonResult.put("message", "로그인 아이디가 존재하지 않습니다");
 
 		try {
-			
-			String memberData="[INFO]\n";
-			
+
+			String memberData = "[INFO]\n";
+
 			List<Member> memberList = chatServer.memberRepository.getList();
 			for (Member member : memberList) {
-				memberData += String.format("[id : %s, pwd : %s, name : %s]\n", member.uid, member.pwd,member.name);
+				memberData += String.format("[id : %s, pwd : %s, name : %s]\n", member.uid, member.pwd, member.name);
 			}
-			
+
 			jsonResult.put("statusCode", "0");
 			jsonResult.put("message", memberData);
-			
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -75,7 +75,7 @@ public class MemberCommand{
 		try {
 			chatServer.memberRepository.memberDelete(member);
 			jsonResult.put("statusCode", "0");
-			jsonResult.put("message",member.getUid()+"  탈퇴했습니다.");
+			jsonResult.put("message", member.getUid() + "  탈퇴했습니다.");
 
 			sc.send(jsonResult.toString());
 
@@ -94,12 +94,23 @@ public class MemberCommand{
 
 		jsonResult.put("statusCode", "-1");
 		jsonResult.put("message", "로그인 아이디가 존재하지 않습니다");
+		String uid1=jsonObject.getString("uid");
 
 		try {
-
-			chatServer.registerMember(member);
-			jsonResult.put("statusCode", "0");
-			jsonResult.put("message", "회원가입이 완료되었습니다.");
+			List<Member> memberList = chatServer.memberRepository.getList();
+			for (Member members : memberList) {
+				System.out.println(members.uid);
+				if(uid1.equals(members.uid)) {
+					jsonResult.put("statusCode", "-1");
+					jsonResult.put("message", "중복회원입니다.");
+					break;
+				}else {
+					jsonResult.put("statusCode", "0");
+					jsonResult.put("message", "회원가입이 완료되었습니다.");
+				}
+			}
+			
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -146,6 +157,7 @@ public class MemberCommand{
 				jsonResult.put("statusCode", "0");
 				jsonResult.put("message", "로그인 성공");
 				jsonResult.put("name", member.getName());
+
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -4,12 +4,18 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-public class ChatClient {
+
+interface ControlManager{
+	public ControlManager getObject();
+}
+
+public class ChatClient implements ControlManager{
 
 	Socket socket;
 	DataInputStream dis;
 	DataOutputStream dos;
 	public static String chatName;
+	
 	public ChatClient() {
 	}
 
@@ -27,5 +33,9 @@ public class ChatClient {
 
 	public void disconnect() throws IOException {
 		socket.close();
+	}
+	
+	public ControlManager getObject(){
+		return null;
 	}
 }

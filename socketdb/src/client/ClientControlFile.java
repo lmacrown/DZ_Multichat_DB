@@ -10,28 +10,39 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.Base64;
 import java.util.Scanner;
-
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-
 import org.json.JSONObject;
 
+import chat.ChatLogRepositoryDB;
 import member.Member;
+import server.Room;
+import server.RoomManager;
 
 public class ClientControlFile extends ChatClient {
-	
+	private Scanner scanner;
 	Member member;
+	ExitListener exitListener = null;
 
-	public ClientControlFile(Member member) {
-		this.member = member;
+	static interface ExitListener {
+		void afterExit();
 	}
+
+	public ClientControlFile(Scanner scanner, Member member, ExitListener exitListener) {
+		this.scanner = scanner;
+		this.member = member;
+		this.exitListener = exitListener;
+	}
+
 	// 채팅 로그 출력
 	public void printChatLog() throws Exception {
+		ChatLogRepositoryDB chatLogRepositoryDB =new ChatLogRepositoryDB();
 		connect();
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put("fileCommand", "chatlog");
+		jsonObject.put("Uid", member.getUid());
 		send(jsonObject.toString());
 		ChatLogReceive();
 		disconnect();
@@ -44,11 +55,70 @@ public class ClientControlFile extends ChatClient {
 		System.out.print("[채팅 로그]  \n" + message);
 	}
 
+	public void receive() {
+		Thread thread = new Thread(() -> {
+			try {
+				while (true) {
+					String json = dis.readUTF();
+					JSONObject root = new JSONObject(json);
+					String chatName = root.getString("chatName");
+					String message = root.getString("message");
+					System.out.println("[" + chatName + "] " + message);
+				}
+			} catch (Exception e1) {
+			}
+		});
+		thread.start();
+	}
+
+	public void sendMessage() {
+		try {
+			ChatLogRepositoryDB chatLogRepositoryDB = new ChatLogRepositoryDB();
+			connect();
+
+			JSONObject jsonObject = new JSONObject();
+			jsonObject.put("chatCommand", "chatstart");
+			jsonObject.put("Uid", member.getUid());
+			String json = jsonObject.toString();
+			send(json);
+
+			receive();
+
+			System.out.println("--------------------------------------------------");
+			System.out.println("보낼 메시지를 입력하고 Enter");
+			System.out.println("채팅를 종료하려면 q를 입력하고 Enter");
+			System.out.println("--------------------------------------------------");
+			while (true) {
+				String message = scanner.nextLine();
+				if (message.toLowerCase().equals("q")) {
+					jsonObject.put("chatCommand", "endchat");
+					break;
+				} else {
+					jsonObject = new JSONObject();
+					jsonObject.put("chatCommand", "message");
+					jsonObject.put("data", message);
+					jsonObject.put("chatname", member.getName());
+
+					chatLogRepositoryDB.chatInput(message, member.getUid());
+					send(jsonObject.toString());
+				}
+			}
+
+			jsonObject.put("chatCommand", "endchat");
+			json = jsonObject.toString();
+			send(json);
+
+			disconnect();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 	// 파일전송
-	public void fileTrasfer(Scanner scan) throws Exception {
+	public void fileTransfer() throws Exception {
 		// 파일이름
 		System.out.println("파일 이름을 입력하시오");
-		String transFileName = scan.nextLine();
+		String transFileName = scanner.nextLine();
 		File filename = new File("C:\\temp\\" + transFileName);
 
 		if (!filename.exists()) {
@@ -72,29 +142,28 @@ public class ClientControlFile extends ChatClient {
 		disconnect();
 		System.out.println("파일 전송 완료");
 	}
-
 	// 파일 받기
-	public void fileReceive(Scanner scan) throws Exception {
+	public void fileReceive() throws Exception {
 		System.out.println("파일 이름을 입력하시오");
-		String transFileName = scan.nextLine();
+		String transFileName = scanner.nextLine();
 		connect();
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put("fileCommand", "fileRe");
 		jsonObject.put("filename", transFileName);
 		send(jsonObject.toString());
-		
+
 		String json = dis.readUTF();
 		JSONObject root = new JSONObject(json);
-		byte [] data = Base64.getDecoder().decode(root.getString("decodeFile").getBytes());
-		    
-        File workPath = new File("C:/Temp/" + transFileName);
-        BufferedOutputStream fos = new BufferedOutputStream(new FileOutputStream(workPath));
-        fos.write(data);
-        fos.close();		
+		byte[] data = Base64.getDecoder().decode(root.getString("decodeFile").getBytes());
+
+		File workPath = new File("C:/Temp/" + transFileName);
+		BufferedOutputStream fos = new BufferedOutputStream(new FileOutputStream(workPath));
+		fos.write(data);
+		fos.close();
 		disconnect();
-		
+
 		System.out.println("파일 받기 완료");
-		
+
 	}
 
 	// 파일리스트 출력
@@ -139,5 +208,11 @@ public class ClientControlFile extends ChatClient {
 
 		frame.pack();
 		frame.setVisible(true);
+	}
+
+	public void exitRoom() {
+		if (exitListener != null) {
+			exitListener.afterExit();
+		}
 	}
 }

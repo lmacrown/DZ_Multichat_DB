@@ -1,50 +1,49 @@
 package client;
 
-
 import java.util.Scanner;
 
 import org.json.JSONObject;
 
-import chat.ChatLogRepositoryDB;
+import client.ClientControlMember.ExitListener;
+import client.ClientControlMember.LoginListener;
 import member.Member;
 
-public class ClientControlChat extends ChatClient{
+public class ClientControlChat extends ChatClient {
 	Member member;
+	private Scanner scanner;
+	static int roomNumber;
 
-	public ClientControlChat(Member member) {
+	static interface EnterRoomListener {
+		void afterEnter();
+	}
+
+	static interface LogOutListener {
+		void afterLogOut();
+	}
+
+	EnterRoomListener enterRoomListener = null;
+	LogOutListener logOutListener = null;
+
+	public ClientControlChat(Scanner scanner, Member member, EnterRoomListener enterRoomListener,
+			LogOutListener logOutListener) {
+		this.scanner = scanner;
 		this.member = member;
+		this.enterRoomListener = enterRoomListener;
+		this.logOutListener = logOutListener;
 	}
-	
-	public void receive() {
-		Thread thread = new Thread(() -> {
-			try {
-				while(true) {
-					String json = dis.readUTF();
-					JSONObject root = new JSONObject(json);
-					String chatName = root.getString("chatName");
-					String message = root.getString("message");
-					System.out.println("["+chatName+"] "+message);
-				}
-			} catch(Exception e1) {
-			}
-		});
-		thread.start();
-	}
-	
-	
-	public void chatCreate(Scanner scanner) {
+
+	public void chatCreate() {
 		try {
-			
+
 			String chatRoomName;
 			System.out.println("생성할 채팅방 이름: ");
-			chatRoomName = scanner.nextLine(); 
-
+			chatRoomName = scanner.nextLine();
 
 			connect();
 
 			JSONObject jsonObject = new JSONObject();
 			jsonObject.put("chatCommand", "chatCreate");
-			jsonObject.put("Uid",member.getUid());
+			jsonObject.put("Uid", member.getUid());
 			jsonObject.put("chatRoomName", chatRoomName);
 
 			String json = jsonObject.toString();
@@ -59,55 +58,60 @@ public class ClientControlChat extends ChatClient{
 		}
 	}
 
-
-
-	public boolean chatEnter(Scanner scanner) {
+	public void chatEnter() {
 		try {
+			JSONObject jsonObject = new JSONObject();
+			String json = jsonObject.toString();
+			String jsons = dis.readUTF();
 			String select;
-			boolean isEnter;
-			System.out.println("입장할 채팅방 번호: ");
-			select = scanner.nextLine();
-			System.out.println("채팅방 닉네임: ");
-			chatName = scanner.nextLine();
-			
 			connect();
 
-			JSONObject jsonObject = new JSONObject();
-			jsonObject.put("chatCommand", "chatEnter");
-			jsonObject.put("Uid",member.getUid());
+			System.out.println("입장할 채팅방 번호: ");
+			select = scanner.nextLine();
+			jsonObject.put("chatCommand", "isEntered");
 			jsonObject.put("chatNo", select);
-			jsonObject.put("chatname", chatName);
-			String json = jsonObject.toString();
-			
 			send(json);
 			
-			isEnter = chatEnterResponse();
-			disconnect();
+			JSONObject root = new JSONObject(jsons);
+			String statusCode = root.getString("isEnteredResponse");
+			
+			if (statusCode.equals("1")) {
+				System.out.println("채팅방 닉네임: ");
+				chatName = scanner.nextLine();
 
-			return isEnter;
+				connect();
 
+				jsonObject.put("chatCommand", "chatEnter");
+				jsonObject.put("Uid", member.getUid());
+				jsonObject.put("chatNo", select);
+				jsonObject.put("chatname", chatName);
+
+				roomNumber = Integer.parseInt(select);
+				send(json);
+				chatEnterResponse();
+				disconnect();
+			}
+			else {
+				
+			}
+
+			if (enterRoomListener != null) {
+				enterRoomListener.afterEnter();
+			}
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			return false;
 		}
 	}
-	public boolean chatEnterResponse() throws Exception {
+
+	public void chatEnterResponse() throws Exception {
 		String json = dis.readUTF();
 		JSONObject root = new JSONObject(json);
 
 		String statusCode = root.getString("statusCode");
 		String message = root.getString("message");
 		System.out.println(message);
-
-		if (statusCode.equals("0")) 
-			return true;
-
-		else 
-			return false;
-
 	}
-	
 
 	public void chatList() {
 		try {
@@ -115,33 +119,29 @@ public class ClientControlChat extends ChatClient{
 
 			JSONObject jsonObject = new JSONObject();
 			jsonObject.put("chatCommand", "chatlist");
-			jsonObject.put("Uid",member.getUid());
+			jsonObject.put("Uid", member.getUid());
 			String json = jsonObject.toString();
 			send(json);
 
 			messagePrintResponse();
 			disconnect();
 
-
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	
-	
-	public void removeRoom(Scanner scanner) {
+	public void removeRoom() {
 		try {
 			String select;
 			System.out.println("삭제할 채팅방 번호: ");
 			select = scanner.nextLine();
 
-
 			connect();
 
 			JSONObject jsonObject = new JSONObject();
 			jsonObject.put("chatCommand", "chatrm");
-			jsonObject.put("Uid",member.getUid());
+			jsonObject.put("Uid", member.getUid());
 			jsonObject.put("chatNo", select);
 
 			String json = jsonObject.toString();
@@ -149,7 +149,6 @@ public class ClientControlChat extends ChatClient{
 
 			messagePrintResponse();
 			disconnect();
-
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -163,48 +162,10 @@ public class ClientControlChat extends ChatClient{
 
 		System.out.println(message);
 	}
-	
-	public void sendMessage(Scanner scanner) {
-		try {
-			ChatLogRepositoryDB chatLogRepositoryDB = new ChatLogRepositoryDB();
-			connect();
 
-			JSONObject jsonObject = new JSONObject();
-			jsonObject.put("chatCommand", "chatstart");
-			jsonObject.put("Uid",member.getUid());
-			String json = jsonObject.toString();
-			send(json);
-
-			receive();			
-
-			System.out.println("--------------------------------------------------");
-			System.out.println("보낼 메시지를 입력하고 Enter");
-			System.out.println("채팅를 종료하려면 q를 입력하고 Enter");
-			System.out.println("--------------------------------------------------");
-			while(true) {
-				String message = scanner.nextLine();
-				if(message.toLowerCase().equals("q")) {
-					jsonObject.put("chatCommand", "endchat");
-					break;
-				} else {
-					jsonObject = new JSONObject();
-					jsonObject.put("chatCommand", "message");
-					jsonObject.put("data", message);
-					chatLogRepositoryDB.chatInput(message);
-					send(jsonObject.toString());
-				}
-			}
-			
-			
-			//jsonObject.put("chatCommand", "endchat");
-			json = jsonObject.toString();
-			send(json);
-			
-			disconnect();
-
-		} catch (Exception e) {
-			e.printStackTrace();
+	public void logOut() {
+		if (logOutListener != null) {
+			logOutListener.afterLogOut();
 		}
 	}
-	
 }

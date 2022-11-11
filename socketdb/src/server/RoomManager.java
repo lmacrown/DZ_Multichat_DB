@@ -1,6 +1,7 @@
 package server;
 
 
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -8,17 +9,18 @@ import java.util.Map;
 import java.util.Vector;
 
 public class RoomManager {
-   
+	
     public List<Room> rooms;        
     public String roomStatus;       
     public int roomNumber=1;
-    
+   
     Map<String, Room> roomRecord = Collections.synchronizedMap(new HashMap<>());
     
     
     public RoomManager() {
         this.rooms = new Vector<>();
         this.roomStatus = "[]";
+        
     }
 
 
@@ -27,8 +29,9 @@ public class RoomManager {
     }
     
     
-    public void createRoom( String title, SocketClient client ) {
-        Room newRoom = new Room(this, roomNumber, title );
+    public void createRoom(String title) {
+    	
+        Room newRoom = new Room(this, roomNumber, title);
         roomNumber++;
         rooms.add(newRoom);
     }

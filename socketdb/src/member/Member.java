@@ -41,8 +41,6 @@ public class Member implements Serializable {
 	public Member(JSONObject jsonObject) {
 		uid = jsonObject.getString("uid");
 		pwd = jsonObject.getString("pwd");
-		name = jsonObject.getString("name");
-		System.out.println(name);
 	}
 
 	public Member() {

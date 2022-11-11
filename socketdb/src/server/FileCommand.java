@@ -13,7 +13,6 @@ import org.json.JSONObject;
 
 import chat.ChatLogRepositoryDB;
 import chat.chatLog;
-import member.Member;
 
 public class FileCommand{
 	
@@ -82,49 +81,47 @@ public class FileCommand{
 		}
 		sc.close();
 	}
-
 	// 채팅 로그 출력-파일
-	public void printChatLog(JSONObject jsonObject) throws Exception {
-		JSONObject json = new JSONObject();
-		String chatRoom = sc.chatTitle;
-		json.put("chatTitle", chatRoom);
-		System.out.println(chatRoom + " 채팅 기록");
-		/*
-		FileInputStream file = new FileInputStream("C:/Temp/" + chatRoom + ".db");
-		Scanner scan = new Scanner(file);
+		public void printChatLog(JSONObject jsonObject) throws Exception {
+			JSONObject json = new JSONObject();
+			String chatRoom = sc.chatTitle;
+			json.put("chatTitle", chatRoom);
+			System.out.println(chatRoom + " 채팅 기록");
+	
+			FileInputStream file = new FileInputStream("C:/Temp/" + chatRoom + ".db");
+			Scanner scan = new Scanner(file);
 
-		String chatms = "";
-		while (scan.hasNextLine()) {
-			chatms += scan.nextLine() + "\n";
+			String chatms = "";
+			while (scan.hasNextLine()) {
+				chatms += scan.nextLine() + "\n";
+			}
+			json.put("chatLogReceive", chatms);
+			sc.send(json.toString());
+			scan.close();
 		}
-		json.put("chatLogReceive", chatms);
-		sc.send(json.toString());
-		scan.close();
-		*/
-		
-		
-	}
-	// 채팅 로그 출력-DB
-	public void printChatLogDB(JSONObject jsonObject) throws Exception {
-		ChatLogRepositoryDB chatLogRepositoryDB = new ChatLogRepositoryDB();
-		//JSONObject json = new JSONObject();
-		String clientUid = jsonObject.getString("Uid");
-		
-		
-		String chatRoom = sc.chatTitle;
-		int chatNo = sc.roomManager.loadRoom(clientUid).no;
-		//sc.chatName = jsonObject.getString("chatname");
+		// 채팅 로그 출력-DB
+		public void printChatLogDB(JSONObject jsonObject) throws Exception {
+			ChatLogRepositoryDB chatLogRepositoryDB = new ChatLogRepositoryDB();
+			JSONObject json = new JSONObject();
+			String clientUid = jsonObject.getString("Uid");
+			
+			String chatRoom = sc.chatTitle;
+			int chatNo = sc.roomManager.loadRoom(clientUid).no;
+			//sc.chatName = jsonObject.getString("chatname");
 
-		System.out.println(chatRoom + " 채팅 기록");
-		System.out.println(chatNo);
-		chatLogRepositoryDB.chatOutput(chatNo);
-		
-		String roomStatus = "[chatLog]\n";
-		List<Member> memberList = chatServer.memberRepository.getList();
-//		for (Member member : memberList) {
-//			memberData += String.format("[id : %s, pwd : %s, name : %s]\n", member.uid, member.pwd,member.name);
-//		}
-	}
+			System.out.println(chatRoom + " 채팅 기록");
+			System.out.println(chatNo);
+			chatLogRepositoryDB.chatOutput(chatNo);
+			
+			String roomStatus = "[chatLog]\n";
+			
+			List<chatLog> chatList=chatLogRepositoryDB.getList();
+			for (chatLog chat : chatList) {
+				roomStatus += String.format("[WriteTime : %s, ChatName : %s, Content : %s]\n", chat.writetime, chat.chatname,chat.content);
+			}
+			json.put("chatLogReceive", roomStatus);
+			sc.send(json.toString());
+		}
 
 	// 파일 리스트 출력
 	public void fileListOutput(JSONObject jsonObject) throws Exception {

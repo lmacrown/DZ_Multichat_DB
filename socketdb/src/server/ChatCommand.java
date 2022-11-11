@@ -4,20 +4,20 @@ import org.json.JSONObject;
 
 import chat.ChattingRepositoryDB;
 
-public class ChatCommand{
-	
+public class ChatCommand {
+
 	ChatServer chatServer;
 	RoomManager roomManager;
 	SocketClient sc;
 	ChattingRepositoryDB chattingRepositoryDB = new ChattingRepositoryDB();
-	static  int enterChatNo;
+
 	public ChatCommand(SocketClient sc, JSONObject jsonObject) {
 		this.chatServer = sc.chatServer;
 		this.roomManager = sc.roomManager;
 		this.sc = sc;
-		
+
 		String command = jsonObject.getString("chatCommand");
-		
+
 		try {
 			switch (command) {
 			case "chatlist":
@@ -25,6 +25,9 @@ public class ChatCommand{
 				break;
 			case "chatCreate":
 				chatCreate(jsonObject);
+				break;
+			case "isentered":
+				isEntered(jsonObject);
 				break;
 			case "chatEnter":
 				chatEnter(jsonObject);
@@ -43,15 +46,22 @@ public class ChatCommand{
 			e.printStackTrace();
 		}
 	}
+	
+	public void isEntered(JSONObject jsonObject) throws Exception{
+		sc.clientUid = jsonObject.getString("Uid");
+		String chatNo=jsonObject.getString("chatNo");
+		chattingRepositoryDB.IsEntered(chatNo, sc.clientUid);
+		
+	}
 
 	public void chatList(JSONObject jsonObject) throws Exception {
-		//파일
+		// 파일
 		sc.clientUid = jsonObject.getString("Uid");
 		sc.room = roomManager.loadRoom(sc.clientUid);
-		//DB
+		// DB
 		chattingRepositoryDB.selectChat(roomManager);
-		
-		//roomManager.updateRoom(); /*파일*/
+
+		// roomManager.updateRoom(); /*파일*/
 		String roomStatus = "[room status]\n";
 		if (roomManager.rooms.size() > 0) {
 			for (Room room : roomManager.rooms) {
@@ -64,12 +74,13 @@ public class ChatCommand{
 		jsonResult.put("message", roomStatus);
 
 		sc.send(jsonResult.toString());
+
 		sc.close();
 
 	}
 
 	public void startChat(JSONObject jsonObject) {
-		
+
 		sc.clientUid = jsonObject.getString("Uid");
 		sc.loadMember(sc.clientUid);
 		sc.room = roomManager.loadRoom(sc.clientUid);
@@ -79,10 +90,8 @@ public class ChatCommand{
 	}
 
 	public void removeRoom(JSONObject jsonObject) throws Exception {
-	
 		sc.clientUid = jsonObject.getString("Uid");
 		sc.room = roomManager.loadRoom(sc.clientUid);
-		
 		int chatNo = Integer.parseInt(jsonObject.getString("chatNo"));
 		JSONObject jsonResult = new JSONObject();
 		Room target = null;
@@ -95,10 +104,10 @@ public class ChatCommand{
 
 			}
 		}
-		//파일
-		if(target != null)
+		// 파일
+		if (target != null)
 			roomManager.destroyRoom(target);
-		//DB
+		// DB
 		if (target != null)
 			chattingRepositoryDB.DelectChat(chatNo);
 		sc.send(jsonResult.toString());
@@ -110,29 +119,28 @@ public class ChatCommand{
 	public void chatCreate(JSONObject jsonObject) throws Exception {
 		sc.clientUid = jsonObject.getString("Uid");
 		sc.room = roomManager.loadRoom(sc.clientUid);
-		
+
 		String chatRoomName = jsonObject.getString("chatRoomName");
 		JSONObject jsonResult = new JSONObject();
 
 		jsonResult.put("statusCode", "0");
-		System.out.println(sc.room);
 
-		roomManager.createRoom(chatRoomName, sc);
+		roomManager.createRoom(chatRoomName);
 		System.out.println("[채팅서버] 채팅방 개설 ");
 		System.out.println("[채팅서버] 현재 채팅방 갯수 " + roomManager.rooms.size());
 
 		jsonResult.put("message", chatRoomName + " 채팅방이 생성되었습니다.");
-		chattingRepositoryDB.insertChat(chatRoomName);
-		sc.send(jsonResult.toString());
 
+		sc.send(jsonResult.toString());
+		chattingRepositoryDB.insertChat(chatRoomName);
 		sc.close();
 	}
 
 	public void chatEnter(JSONObject jsonObject) throws Exception {
 		sc.clientUid = jsonObject.getString("Uid");
 		sc.room = roomManager.loadRoom(sc.clientUid);
-		
-		setEnterChatNo(Integer.parseInt(jsonObject.getString("chatNo")));
+
+		int chatNo = Integer.parseInt(jsonObject.getString("chatNo"));
 		sc.chatName = jsonObject.getString("chatname");
 
 		JSONObject jsonResult = new JSONObject();
@@ -141,13 +149,12 @@ public class ChatCommand{
 		jsonResult.put("message", "해당번호 채팅방이 존재하지 않습니다.");
 
 		for (Room room : roomManager.rooms) {
-			if (room.no == getEnterChatNo()) {
+			if (room.no == chatNo) {
 				jsonResult.put("statusCode", "0");
-				jsonResult.put("message", getEnterChatNo() + "번 방에 입장했습니다.");
-				sc.room = room;
+				jsonResult.put("message", chatNo + "번 방에 입장했습니다.");
 				room.entryRoom(sc);
-				chattingRepositoryDB.enterChat(getEnterChatNo(), sc.chatName,sc.clientUid);
-				//수정
+				chattingRepositoryDB.enterChat(chatNo,sc.clientUid,sc.chatName);
+				sc.room = room;
 				sc.chatTitle = room.title;
 				break;
 			}
@@ -157,13 +164,5 @@ public class ChatCommand{
 		sc.send(jsonResult.toString());
 
 		sc.close();
-	}
-
-	public static int getEnterChatNo() {
-		return enterChatNo;
-	}
-
-	public static void setEnterChatNo(int enterChatNo) {
-		ChatCommand.enterChatNo = enterChatNo;
 	}
 }

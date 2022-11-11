@@ -5,38 +5,34 @@ import org.json.JSONObject;
 
 import member.Member;
 
-
 public class ClientControlMember extends ChatClient {
 
 	private Scanner scanner = null;
 	Member member;
+
 	static interface LoginListener {
-		void afterLogin(); 
+		void afterLogin();
 	}
 
 	static interface ExitListener {
-		void afterExit(); 
+		void afterExit();
 	}
 
 	LoginListener loginListener = null;
-	ExitListener  exitListener = null;
+	ExitListener exitListener = null;
 
-	public ClientControlMember(Scanner scanner
-			,Member member
-			, LoginListener loginListener
-			, ExitListener exitListener) {
+	public ClientControlMember(Scanner scanner, Member member, LoginListener loginListener, ExitListener exitListener) {
 		this.scanner = scanner;
 		this.member = member;
 		this.loginListener = loginListener;
 		this.exitListener = exitListener;
 	}
 
-
-	public boolean login() {
+	// 로그인
+	public void login() {
 		try {
 			String uid;
 			String pwd;
-			boolean result = false;
 			System.out.println("\n1. 로그인 작업");
 			System.out.print("아이디 : ");
 			uid = scanner.nextLine();
@@ -50,45 +46,39 @@ public class ClientControlMember extends ChatClient {
 			jsonObject.put("uid", uid);
 			jsonObject.put("pwd", pwd);
 
-			
 			send(jsonObject.toString());
-			
-			result = loginResponse(uid,pwd);
-			
-			if (result == true && loginListener != null) {
+
+			loginResponse(uid, pwd);
+
+			if (loginListener != null) {
 				loginListener.afterLogin();
 			}
-			
-			disconnect();
-			return result;
 
+			disconnect();
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			return false;
 		}
 	}
 
-	public boolean loginResponse(String uid, String pwd) throws Exception {
+	public void loginResponse(String uid, String pwd) throws Exception {
 		String json = dis.readUTF();
 		JSONObject root = new JSONObject(json);
 		String statusCode = root.getString("statusCode");
 		String message = root.getString("message");
 
 		if (statusCode.equals("0")) {
-			System.out.println("로그인 성공");	
-			System.out.println(uid+"님이 로그인 하셨습니다.");
-			
-			member = member.settingMember(uid,pwd,root.getString("name"));
-			return true;
+			System.out.println("로그인 성공");
+			System.out.println(uid + "님이 로그인 하셨습니다.");
+
+			member = member.settingMember(uid, pwd, root.getString("name"));
 		} else {
 			System.out.println(message);
-			return false;
 		}
 	}
 
 	// 회원가입
-	public boolean registerMember() {
+	public void registerMember() {
 		String uid;
 		String pwd;
 		String name;
@@ -113,16 +103,14 @@ public class ClientControlMember extends ChatClient {
 			send(json);
 
 			registerMemberResonse();
-			System.out.println(name+"님 환영합니다.");
+			//System.out.println(name + "님 환영합니다.");
 
 			disconnect();
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return false;
 	}
-
 
 	public void registerMemberResonse() throws Exception {
 		String json = dis.readUTF();
@@ -137,32 +125,24 @@ public class ClientControlMember extends ChatClient {
 		}
 	}
 
+	public void passwdSearch() throws Exception {
+		String uid;
 
+		System.out.println("\n3. 비밀번호 찾기");
+		System.out.print("아이디 : ");
+		uid = scanner.nextLine();
 
-	public boolean passwdSearch() {
-		try {
-			String uid;
+		connect();
 
-			System.out.println("\n3. 비밀번호 찾기");
-			System.out.print("아이디 : ");
-			uid = scanner.nextLine();
+		JSONObject jsonObject = new JSONObject();
+		jsonObject.put("memberCommand", "passwdSearch");
+		jsonObject.put("uid", uid);
+		String json = jsonObject.toString();
+		send(json);
 
-			connect();
+		passwdSearchResponse();
 
-			JSONObject jsonObject = new JSONObject();
-			jsonObject.put("memberCommand", "passwdSearch");
-			jsonObject.put("uid", uid);
-			String json = jsonObject.toString();
-			send(json);
-
-			passwdSearchResponse();
-
-			disconnect();
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return false;
+		disconnect();
 	}
 
 	public void passwdSearchResponse() throws Exception {
@@ -179,38 +159,33 @@ public class ClientControlMember extends ChatClient {
 		}
 	}
 
-	public boolean updateMember() {
+	public void updateMember() throws Exception {
 		String uid;
 		String pwd;
 		String name;
-		try {
-			System.out.println("[4]회원정보수정");
-			System.out.println("변경할 내용을 입력하세요.");
-			System.out.print("아이디 : ");
-			uid = scanner.nextLine();
-			System.out.print("비번 : ");
-			pwd = scanner.nextLine();
-			System.out.print("이름 : ");
-			name = scanner.nextLine();
+		System.out.println("[4]회원정보수정");
+		System.out.println("변경할 내용을 입력하세요.");
+		System.out.print("아이디 : ");
+		uid = scanner.nextLine();
+		System.out.print("비번 : ");
+		pwd = scanner.nextLine();
+		System.out.print("이름 : ");
+		name = scanner.nextLine();
 
-			connect();
+		connect();
 
-			JSONObject jsonObject = new JSONObject();
-			jsonObject.put("memberCommand", "updateMember");
-			jsonObject.put("uid", uid);
-			jsonObject.put("pwd", pwd);
-			jsonObject.put("name", name);
-			String json = jsonObject.toString();
-			send(json);
+		JSONObject jsonObject = new JSONObject();
+		jsonObject.put("memberCommand", "updateMember");
+		jsonObject.put("uid", uid);
+		jsonObject.put("pwd", pwd);
+		jsonObject.put("name", name);
+		String json = jsonObject.toString();
+		send(json);
 
-			updateMemberResponse();
+		updateMemberResponse();
 
-			disconnect();
+		disconnect();
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return false;
 	}
 
 	public void updateMemberResponse() throws Exception {
@@ -226,36 +201,29 @@ public class ClientControlMember extends ChatClient {
 		}
 	}
 
-	public boolean memberDelete() {
+	public void memberDelete() throws Exception {
 		String uid;
 		String pwd;
 
-		try {
-			System.out.println("[5]회원탈퇴");
-			System.out.print("아이디 : ");
-			uid = scanner.nextLine();
-			System.out.print("비번 : ");
-			pwd = scanner.nextLine();
+		System.out.println("[5]회원탈퇴");
+		System.out.print("아이디 : ");
+		uid = scanner.nextLine();
+		System.out.print("비번 : ");
+		pwd = scanner.nextLine();
 
+		connect();
 
-			connect();
+		JSONObject jsonObject = new JSONObject();
+		jsonObject.put("memberCommand", "memberDelete");
+		jsonObject.put("uid", uid);
+		jsonObject.put("pwd", pwd);
+		jsonObject.put("name", "");
+		String json = jsonObject.toString();
+		send(json);
 
-			JSONObject jsonObject = new JSONObject();
-			jsonObject.put("memberCommand", "memberDelete");
-			jsonObject.put("uid", uid);
-			jsonObject.put("pwd", pwd);
-			jsonObject.put("name", "");
-			String json = jsonObject.toString();
-			send(json);
+		updateMemberResponse();
 
-			updateMemberResponse();
-
-			disconnect();
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return false;
+		disconnect();
 	}
 
 	public void memberDeleteResponse() throws Exception {
@@ -271,10 +239,7 @@ public class ClientControlMember extends ChatClient {
 		}
 	}
 
-	public boolean memberInfo() {
-
-
-		try {
+	public void memberInfo() throws Exception{
 			System.out.println("[회원목록]");
 			connect();
 
@@ -286,12 +251,6 @@ public class ClientControlMember extends ChatClient {
 
 			memberInfoResonse();
 			disconnect();
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return false;
-
 	}
 
 	public void memberInfoResonse() throws Exception {
@@ -300,19 +259,17 @@ public class ClientControlMember extends ChatClient {
 		String statusCode = root.getString("statusCode");
 		String message = root.getString("message");
 
-
-		if (statusCode.equals("0")) {			
+		if (statusCode.equals("0")) {
 			System.out.println(message);
 		} else {
 			System.out.println(message);
 		}
 	}
+
 	public boolean memberExit() {
 		if (exitListener != null) {
 			exitListener.afterExit();
 		}
 		return true;
 	}
-
-
 }
